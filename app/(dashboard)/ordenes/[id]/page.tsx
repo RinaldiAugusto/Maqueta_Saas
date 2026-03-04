@@ -67,6 +67,21 @@ export default async function OrdenDetallePage({
 
   // ── SERVER ACTIONS ──
 
+  async function editarPresupuesto(formData: FormData) {
+    "use server";
+    const costo = formData.get("costo") as string;
+    const descripcion = formData.get("descripcion") as string;
+    const supabase = await createClient();
+    await supabase
+      .from("ordenes")
+      .update({
+        costo: parseFloat(costo) || 0,
+        descripcion: descripcion || orden.descripcion,
+      })
+      .eq("id", id);
+    revalidatePath(`/ordenes/${id}`);
+  }
+
   async function registrarPago(formData: FormData) {
     "use server";
     const metodo = formData.get("metodo_pago") as string;
@@ -91,9 +106,7 @@ export default async function OrdenDetallePage({
     const titulo = `${vehiculo?.marca} ${vehiculo?.modelo} – ${orden.descripcion}`;
     const token = process.env.MP_ACCESS_TOKEN;
     const supabase = await createClient();
-
     if (!token) {
-      // Sin token: guardamos link de demo para mostrar el flujo
       await supabase
         .from("ordenes")
         .update({ mp_link: `https://mpago.la/demo-${id}` })
@@ -101,7 +114,6 @@ export default async function OrdenDetallePage({
       revalidatePath(`/ordenes/${id}`);
       return;
     }
-
     try {
       const res = await fetch(
         "https://api.mercadopago.com/checkout/preferences",
@@ -291,10 +303,29 @@ export default async function OrdenDetallePage({
                     </span>
                   </div>
                 </div>
+                {/* BOTÓN PDF */}
+                <div
+                  className="pt-3 border-t"
+                  style={{ borderColor: "#2e3650" }}
+                >
+                  <a
+                    href={`/api/presupuesto/${id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-lg transition-all"
+                    style={{
+                      background: "rgba(79,142,247,0.08)",
+                      color: "#4f8ef7",
+                      border: "1px solid rgba(79,142,247,0.2)",
+                    }}
+                  >
+                    ↓ Descargar Presupuesto PDF
+                  </a>
+                </div>
               </div>
             </div>
 
-            {/* PANEL DE COBRO — solo visible si está Finalizado */}
+            {/* PANEL DE COBRO */}
             {esFinalizado && (
               <div
                 className="rounded-xl border p-5"
@@ -312,7 +343,6 @@ export default async function OrdenDetallePage({
                 >
                   {yaCobrado ? "✓ Pago Registrado" : "Registrar Cobro"}
                 </p>
-
                 {yaCobrado ? (
                   <div className="flex flex-col gap-3">
                     <div className="grid grid-cols-3 gap-4">
@@ -384,7 +414,6 @@ export default async function OrdenDetallePage({
                   </div>
                 ) : (
                   <div className="flex flex-col gap-4">
-                    {/* Formulario cobro manual */}
                     <form
                       action={registrarPago}
                       className="flex flex-col gap-3"
@@ -458,8 +487,6 @@ export default async function OrdenDetallePage({
                         ✓ Confirmar Cobro
                       </button>
                     </form>
-
-                    {/* Separador */}
                     <div className="flex items-center gap-3">
                       <div
                         className="flex-1 h-px"
@@ -476,33 +503,29 @@ export default async function OrdenDetallePage({
                         style={{ background: "#2e3650" }}
                       />
                     </div>
-
-                    {/* Mercado Pago */}
                     {orden.mp_link ? (
-                      <div className="flex flex-col gap-2">
-                        <div
-                          className="flex items-center gap-2 p-3 rounded-lg border"
-                          style={{
-                            background: "rgba(79,142,247,0.05)",
-                            borderColor: "rgba(79,142,247,0.2)",
-                          }}
+                      <div
+                        className="flex items-center gap-2 p-3 rounded-lg border"
+                        style={{
+                          background: "rgba(79,142,247,0.05)",
+                          borderColor: "rgba(79,142,247,0.2)",
+                        }}
+                      >
+                        <span
+                          className="text-xs font-semibold flex-shrink-0"
+                          style={{ color: "#4f8ef7" }}
                         >
-                          <span
-                            className="text-xs font-semibold flex-shrink-0"
-                            style={{ color: "#4f8ef7" }}
-                          >
-                            ◈ Link:
-                          </span>
-                          <a
-                            href={orden.mp_link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs font-mono truncate flex-1 hover:underline"
-                            style={{ color: "#a8b4cc" }}
-                          >
-                            {orden.mp_link}
-                          </a>
-                        </div>
+                          ◈ Link:
+                        </span>
+                        <a
+                          href={orden.mp_link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs font-mono truncate flex-1 hover:underline"
+                          style={{ color: "#a8b4cc" }}
+                        >
+                          {orden.mp_link}
+                        </a>
                       </div>
                     ) : (
                       <form
@@ -659,6 +682,80 @@ export default async function OrdenDetallePage({
 
           {/* COLUMNA DERECHA */}
           <div className="flex flex-col gap-5">
+            {/* Editar presupuesto */}
+            {!yaCobrado && (
+              <div
+                className="rounded-xl border p-5"
+                style={{ background: "#252b3b", borderColor: "#2e3650" }}
+              >
+                <p
+                  className="text-xs font-bold uppercase mb-4"
+                  style={{ color: "#6b7899", letterSpacing: "1.5px" }}
+                >
+                  Editar Presupuesto
+                </p>
+                <form
+                  action={editarPresupuesto}
+                  className="flex flex-col gap-3"
+                >
+                  <div className="flex flex-col gap-1.5">
+                    <label
+                      className="text-xs font-semibold"
+                      style={{ color: "#a8b4cc" }}
+                    >
+                      Descripción
+                    </label>
+                    <input
+                      type="text"
+                      name="descripcion"
+                      defaultValue={orden.descripcion}
+                      className="rounded-lg text-sm outline-none"
+                      style={{
+                        background: "#202637",
+                        border: "1px solid #374060",
+                        padding: "9px 13px",
+                        color: "#dde3f0",
+                        fontFamily: "inherit",
+                      }}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label
+                      className="text-xs font-semibold"
+                      style={{ color: "#a8b4cc" }}
+                    >
+                      Costo
+                    </label>
+                    <input
+                      type="number"
+                      name="costo"
+                      defaultValue={orden.costo}
+                      className="rounded-lg text-sm outline-none"
+                      style={{
+                        background: "#202637",
+                        border: "1px solid #374060",
+                        padding: "9px 13px",
+                        color: "#dde3f0",
+                        fontFamily: "inherit",
+                      }}
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    className="w-full rounded-lg text-sm font-bold py-2.5 transition-all"
+                    style={{
+                      background: "rgba(79,142,247,0.12)",
+                      color: "#4f8ef7",
+                      border: "1px solid rgba(79,142,247,0.25)",
+                      fontFamily: "inherit",
+                    }}
+                  >
+                    Guardar cambios
+                  </button>
+                </form>
+              </div>
+            )}
+
             {/* Vehículo */}
             <div
               className="rounded-xl border p-5"

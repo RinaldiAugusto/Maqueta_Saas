@@ -2,16 +2,30 @@ import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 import DeleteButton from "@/components/DeleteButton";
 
-export default async function VehiculosPage() {
+export default async function VehiculosPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
+  const query = (await searchParams).q || "";
   const supabase = await createClient();
+
   const { data: clientes } = await supabase
     .from("clientes")
     .select("id, nombre")
     .order("nombre", { ascending: true });
-  const { data: vehiculos } = await supabase
+
+  let vehiculosQuery = supabase
     .from("vehiculos")
     .select("*, clientes(nombre)")
     .order("created_at", { ascending: false });
+
+  if (query) vehiculosQuery = vehiculosQuery.ilike("patente", `%${query}%`);
+
+  const { data: vehiculos } = await vehiculosQuery;
+  const { data: totalData } = await supabase
+    .from("vehiculos")
+    .select("id", { count: "exact" });
 
   async function agregarVehiculo(formData: FormData) {
     "use server";
@@ -47,7 +61,7 @@ export default async function VehiculosPage() {
 
   return (
     <div
-      className="p-8"
+      className="p-6 md:p-8"
       style={{
         background: "#1a1f2e",
         minHeight: "100vh",
@@ -83,7 +97,7 @@ export default async function VehiculosPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* FORM */}
           <div
             className="col-span-1 rounded-xl border p-5 h-fit"
@@ -115,61 +129,28 @@ export default async function VehiculosPage() {
                   </option>
                 ))}
               </select>
-              <input
-                type="text"
-                name="patente"
-                required
-                placeholder="Patente"
-                className="rounded-lg text-sm outline-none w-full uppercase"
-                style={{
-                  background: "#202637",
-                  border: "1px solid #374060",
-                  padding: "9px 13px",
-                  color: "#dde3f0",
-                  fontFamily: "inherit",
-                }}
-              />
-              <input
-                type="text"
-                name="marca"
-                required
-                placeholder="Marca (Ej: Ford)"
-                className="rounded-lg text-sm outline-none w-full"
-                style={{
-                  background: "#202637",
-                  border: "1px solid #374060",
-                  padding: "9px 13px",
-                  color: "#dde3f0",
-                  fontFamily: "inherit",
-                }}
-              />
-              <input
-                type="text"
-                name="modelo"
-                required
-                placeholder="Modelo (Ej: Fiesta)"
-                className="rounded-lg text-sm outline-none w-full"
-                style={{
-                  background: "#202637",
-                  border: "1px solid #374060",
-                  padding: "9px 13px",
-                  color: "#dde3f0",
-                  fontFamily: "inherit",
-                }}
-              />
-              <input
-                type="text"
-                name="año"
-                placeholder="Año"
-                className="rounded-lg text-sm outline-none w-full"
-                style={{
-                  background: "#202637",
-                  border: "1px solid #374060",
-                  padding: "9px 13px",
-                  color: "#dde3f0",
-                  fontFamily: "inherit",
-                }}
-              />
+              {[
+                { name: "patente", placeholder: "Patente", extra: "uppercase" },
+                { name: "marca", placeholder: "Marca (Ej: Ford)" },
+                { name: "modelo", placeholder: "Modelo (Ej: Fiesta)" },
+                { name: "año", placeholder: "Año" },
+              ].map(({ name, placeholder, extra }) => (
+                <input
+                  key={name}
+                  type="text"
+                  name={name}
+                  placeholder={placeholder}
+                  required={name !== "año"}
+                  className={`rounded-lg text-sm outline-none w-full ${extra ?? ""}`}
+                  style={{
+                    background: "#202637",
+                    border: "1px solid #374060",
+                    padding: "9px 13px",
+                    color: "#dde3f0",
+                    fontFamily: "inherit",
+                  }}
+                />
+              ))}
               <button
                 type="submit"
                 className="w-full rounded-lg text-sm font-bold text-white transition-all mt-1"
@@ -186,26 +167,73 @@ export default async function VehiculosPage() {
 
           {/* LISTA */}
           <div
-            className="col-span-2 rounded-xl border p-5"
+            className="col-span-1 md:col-span-2 rounded-xl border p-5"
             style={{ background: "#252b3b", borderColor: "#2e3650" }}
           >
+            {/* Header con buscador */}
             <div
-              className="flex items-center justify-between mb-4 pb-3 border-b"
+              className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-3 border-b"
               style={{ borderColor: "#2e3650" }}
             >
-              <p
-                className="text-xs font-bold uppercase"
-                style={{ color: "#6b7899", letterSpacing: "1.5px" }}
-              >
-                Parque Automotor
-              </p>
-              <span
-                className="px-2.5 py-1 rounded-full text-xs font-bold"
-                style={{ background: "#2a3145", color: "#6b7899" }}
-              >
-                {vehiculos?.length || 0} vehículos
-              </span>
+              <div className="flex items-center gap-3">
+                <p
+                  className="text-xs font-bold uppercase"
+                  style={{ color: "#6b7899", letterSpacing: "1.5px" }}
+                >
+                  Parque Automotor
+                </p>
+                <span
+                  className="px-2.5 py-1 rounded-full text-xs font-bold"
+                  style={{ background: "#2a3145", color: "#6b7899" }}
+                >
+                  {totalData?.length || 0} vehículos
+                </span>
+              </div>
+              {/* Buscador por patente */}
+              <form className="relative">
+                <input
+                  type="text"
+                  name="q"
+                  defaultValue={query}
+                  placeholder="Buscar patente..."
+                  className="rounded-lg text-sm outline-none uppercase"
+                  style={{
+                    background: "#202637",
+                    border: "1px solid #374060",
+                    padding: "7px 12px 7px 32px",
+                    color: "#dde3f0",
+                    fontFamily: "inherit",
+                    width: "180px",
+                    letterSpacing: "1px",
+                  }}
+                />
+                <span
+                  className="absolute left-2.5 top-1/2 -translate-y-1/2 text-sm"
+                  style={{ color: "#6b7899" }}
+                >
+                  ⌕
+                </span>
+                {query && (
+                  <a
+                    href="/vehiculos"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs"
+                    style={{ color: "#6b7899" }}
+                  >
+                    ✕
+                  </a>
+                )}
+              </form>
             </div>
+
+            {query && (
+              <p className="text-xs mb-3" style={{ color: "#6b7899" }}>
+                Resultados para:{" "}
+                <span style={{ color: "#4f8ef7" }}>
+                  "{query.toUpperCase()}"
+                </span>{" "}
+                — {vehiculos?.length || 0} encontrados
+              </p>
+            )}
 
             {vehiculos && vehiculos.length > 0 ? (
               <ul className="flex flex-col gap-2">
@@ -272,7 +300,9 @@ export default async function VehiculosPage() {
                 className="text-center text-xs py-10"
                 style={{ color: "#6b7899" }}
               >
-                No hay vehículos registrados todavía.
+                {query
+                  ? "No se encontraron vehículos con esa patente."
+                  : "No hay vehículos registrados todavía."}
               </p>
             )}
           </div>

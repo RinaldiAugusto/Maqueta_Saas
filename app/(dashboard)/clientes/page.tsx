@@ -1,13 +1,28 @@
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 import DeleteButton from "@/components/DeleteButton";
+import ClienteDetalle from "@/components/ClienteDetalle";
 
-export default async function ClientesPage() {
+export default async function ClientesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
+  const query = (await searchParams).q || "";
   const supabase = await createClient();
-  const { data: clientes } = await supabase
+
+  let clientesQuery = supabase
     .from("clientes")
-    .select("*")
+    .select("*, vehiculos ( id, patente, marca, modelo, año )")
     .order("created_at", { ascending: false });
+
+  if (query) clientesQuery = clientesQuery.ilike("nombre", `%${query}%`);
+
+  const { data: clientes } = await clientesQuery;
+
+  const { data: totalData } = await supabase
+    .from("clientes")
+    .select("id", { count: "exact" });
 
   async function agregarCliente(formData: FormData) {
     "use server";
@@ -36,7 +51,7 @@ export default async function ClientesPage() {
 
   return (
     <div
-      className="p-8"
+      className="p-6 md:p-8"
       style={{
         background: "#1a1f2e",
         minHeight: "100vh",
@@ -72,7 +87,7 @@ export default async function ClientesPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* FORM */}
           <div
             className="col-span-1 rounded-xl border p-5 h-fit"
@@ -85,46 +100,42 @@ export default async function ClientesPage() {
               Nuevo Cliente
             </p>
             <form action={agregarCliente} className="flex flex-col gap-3">
-              <input
-                type="text"
-                name="nombre"
-                required
-                placeholder="Nombre completo"
-                className="rounded-lg text-sm outline-none w-full"
-                style={{
-                  background: "#202637",
-                  border: "1px solid #374060",
-                  padding: "9px 13px",
-                  color: "#dde3f0",
-                  fontFamily: "inherit",
-                }}
-              />
-              <input
-                type="text"
-                name="telefono"
-                placeholder="Teléfono"
-                className="rounded-lg text-sm outline-none w-full"
-                style={{
-                  background: "#202637",
-                  border: "1px solid #374060",
-                  padding: "9px 13px",
-                  color: "#dde3f0",
-                  fontFamily: "inherit",
-                }}
-              />
-              <input
-                type="email"
-                name="email"
-                placeholder="Email"
-                className="rounded-lg text-sm outline-none w-full"
-                style={{
-                  background: "#202637",
-                  border: "1px solid #374060",
-                  padding: "9px 13px",
-                  color: "#dde3f0",
-                  fontFamily: "inherit",
-                }}
-              />
+              {[
+                {
+                  name: "nombre",
+                  placeholder: "Nombre completo",
+                  type: "text",
+                  required: true,
+                },
+                {
+                  name: "telefono",
+                  placeholder: "Teléfono",
+                  type: "text",
+                  required: false,
+                },
+                {
+                  name: "email",
+                  placeholder: "Email",
+                  type: "email",
+                  required: false,
+                },
+              ].map(({ name, placeholder, type, required }) => (
+                <input
+                  key={name}
+                  type={type}
+                  name={name}
+                  placeholder={placeholder}
+                  required={required}
+                  className="rounded-lg text-sm outline-none w-full"
+                  style={{
+                    background: "#202637",
+                    border: "1px solid #374060",
+                    padding: "9px 13px",
+                    color: "#dde3f0",
+                    fontFamily: "inherit",
+                  }}
+                />
+              ))}
               <button
                 type="submit"
                 className="w-full rounded-lg text-sm font-bold text-white transition-all mt-1"
@@ -141,73 +152,88 @@ export default async function ClientesPage() {
 
           {/* LISTA */}
           <div
-            className="col-span-2 rounded-xl border p-5"
+            className="col-span-1 md:col-span-2 rounded-xl border p-5"
             style={{ background: "#252b3b", borderColor: "#2e3650" }}
           >
+            {/* Header con buscador */}
             <div
-              className="flex items-center justify-between mb-4 pb-3 border-b"
+              className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-3 border-b"
               style={{ borderColor: "#2e3650" }}
             >
-              <p
-                className="text-xs font-bold uppercase"
-                style={{ color: "#6b7899", letterSpacing: "1.5px" }}
-              >
-                Listado Activo
-              </p>
-              <span
-                className="px-2.5 py-1 rounded-full text-xs font-bold"
-                style={{ background: "#2a3145", color: "#6b7899" }}
-              >
-                {clientes?.length || 0} registros
-              </span>
+              <div className="flex items-center gap-3">
+                <p
+                  className="text-xs font-bold uppercase"
+                  style={{ color: "#6b7899", letterSpacing: "1.5px" }}
+                >
+                  Listado Activo
+                </p>
+                <span
+                  className="px-2.5 py-1 rounded-full text-xs font-bold"
+                  style={{ background: "#2a3145", color: "#6b7899" }}
+                >
+                  {totalData?.length || 0} registros
+                </span>
+              </div>
+              {/* Buscador */}
+              <form className="relative">
+                <input
+                  type="text"
+                  name="q"
+                  defaultValue={query}
+                  placeholder="Buscar por nombre..."
+                  className="rounded-lg text-sm outline-none"
+                  style={{
+                    background: "#202637",
+                    border: "1px solid #374060",
+                    padding: "7px 12px 7px 32px",
+                    color: "#dde3f0",
+                    fontFamily: "inherit",
+                    width: "200px",
+                  }}
+                />
+                <span
+                  className="absolute left-2.5 top-1/2 -translate-y-1/2 text-sm"
+                  style={{ color: "#6b7899" }}
+                >
+                  ⌕
+                </span>
+                {query && (
+                  <a
+                    href="/clientes"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs"
+                    style={{ color: "#6b7899" }}
+                  >
+                    ✕
+                  </a>
+                )}
+              </form>
             </div>
+
+            {query && (
+              <p className="text-xs mb-3" style={{ color: "#6b7899" }}>
+                Resultados para:{" "}
+                <span style={{ color: "#4f8ef7" }}>"{query}"</span> —{" "}
+                {clientes?.length || 0} encontrados
+              </p>
+            )}
 
             {clientes && clientes.length > 0 ? (
               <ul className="flex flex-col gap-2">
                 {clientes.map((c) => (
-                  <li
+                  <ClienteDetalle
                     key={c.id}
-                    className="flex justify-between items-center p-4 rounded-xl border group transition-all hover:-translate-y-0.5"
-                    style={{ background: "#202637", borderColor: "#2e3650" }}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
-                        style={{
-                          background: "rgba(79,142,247,0.12)",
-                          color: "#4f8ef7",
-                        }}
-                      >
-                        {c.nombre?.charAt(0).toUpperCase()}
-                      </div>
-                      <div>
-                        <p
-                          className="font-bold text-sm"
-                          style={{ color: "#dde3f0" }}
-                        >
-                          {c.nombre}
-                        </p>
-                        <p className="text-xs" style={{ color: "#6b7899" }}>
-                          {c.telefono && <span>{c.telefono}</span>}
-                          {c.telefono && c.email && <span> · </span>}
-                          {c.email && <span>{c.email}</span>}
-                        </p>
-                      </div>
-                    </div>
-                    <form
-                      action={eliminarCliente}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <input type="hidden" name="id" value={c.id} />
-                      <DeleteButton
-                        mensaje={`¿Eliminar a ${c.nombre}?`}
-                        className="text-xs px-2 py-1.5 rounded-lg transition-all"
-                        style={{ color: "#6b7899", background: "transparent" }}
-                      >
-                        ✕
-                      </DeleteButton>
-                    </form>
-                  </li>
+                    cliente={c}
+                    vehiculos={
+                      (c.vehiculos as {
+                        id: number;
+                        patente: string;
+                        marca: string;
+                        modelo: string;
+                        año: string;
+                      }[]) || []
+                    }
+                    eliminarAction={eliminarCliente}
+                  />
                 ))}
               </ul>
             ) : (
@@ -215,7 +241,9 @@ export default async function ClientesPage() {
                 className="text-center text-xs py-10"
                 style={{ color: "#6b7899" }}
               >
-                No hay clientes registrados todavía.
+                {query
+                  ? "No se encontraron clientes con ese nombre."
+                  : "No hay clientes registrados todavía."}
               </p>
             )}
           </div>

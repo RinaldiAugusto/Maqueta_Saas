@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import {
   BarChart,
   Bar,
@@ -13,7 +14,6 @@ import {
   PieChart,
   Pie,
   Cell,
-  Legend,
 } from "recharts";
 
 type Props = {
@@ -25,85 +25,74 @@ type Props = {
   ticketPromedio: number;
   mejorMes: string;
   mejorMesValor: number;
+  mesesActual: number;
 };
 
-const CustomTooltipBar = ({ active, payload, label }: any) => {
-  if (active && payload && payload.length) {
-    return (
-      <div
-        style={{
-          background: "#202637",
-          border: "1px solid #374060",
-          borderRadius: "10px",
-          padding: "12px 16px",
-          fontFamily: "'Plus Jakarta Sans', sans-serif",
-        }}
-      >
-        <p style={{ color: "#6b7899", fontSize: "11px", marginBottom: "6px" }}>
-          {label}
-        </p>
-        <p style={{ color: "#34d399", fontWeight: 800, fontSize: "15px" }}>
-          ${new Intl.NumberFormat("es-AR").format(payload[0].value)}
-        </p>
-      </div>
-    );
-  }
-  return null;
-};
+const Tooltip1 = ({ active, payload, label }: any) =>
+  active && payload?.length ? (
+    <div
+      style={{
+        background: "#202637",
+        border: "1px solid #374060",
+        borderRadius: "10px",
+        padding: "12px 16px",
+        fontFamily: "'Plus Jakarta Sans', sans-serif",
+      }}
+    >
+      <p style={{ color: "#6b7899", fontSize: "11px", marginBottom: "6px" }}>
+        {label}
+      </p>
+      <p style={{ color: "#34d399", fontWeight: 800, fontSize: "15px" }}>
+        ${new Intl.NumberFormat("es-AR").format(payload[0].value)}
+      </p>
+    </div>
+  ) : null;
 
-const CustomTooltipLine = ({ active, payload, label }: any) => {
-  if (active && payload && payload.length) {
-    return (
-      <div
-        style={{
-          background: "#202637",
-          border: "1px solid #374060",
-          borderRadius: "10px",
-          padding: "12px 16px",
-          fontFamily: "'Plus Jakarta Sans', sans-serif",
-        }}
-      >
-        <p style={{ color: "#6b7899", fontSize: "11px", marginBottom: "6px" }}>
-          {label}
-        </p>
-        <p style={{ color: "#4f8ef7", fontWeight: 800, fontSize: "15px" }}>
-          {payload[0].value} órdenes
-        </p>
-      </div>
-    );
-  }
-  return null;
-};
+const Tooltip2 = ({ active, payload, label }: any) =>
+  active && payload?.length ? (
+    <div
+      style={{
+        background: "#202637",
+        border: "1px solid #374060",
+        borderRadius: "10px",
+        padding: "12px 16px",
+        fontFamily: "'Plus Jakarta Sans', sans-serif",
+      }}
+    >
+      <p style={{ color: "#6b7899", fontSize: "11px", marginBottom: "6px" }}>
+        {label}
+      </p>
+      <p style={{ color: "#4f8ef7", fontWeight: 800, fontSize: "15px" }}>
+        {payload[0].value} órdenes
+      </p>
+    </div>
+  ) : null;
 
-const CustomTooltipPie = ({ active, payload }: any) => {
-  if (active && payload && payload.length) {
-    return (
-      <div
+const Tooltip3 = ({ active, payload }: any) =>
+  active && payload?.length ? (
+    <div
+      style={{
+        background: "#202637",
+        border: "1px solid #374060",
+        borderRadius: "10px",
+        padding: "12px 16px",
+        fontFamily: "'Plus Jakarta Sans', sans-serif",
+      }}
+    >
+      <p
         style={{
-          background: "#202637",
-          border: "1px solid #374060",
-          borderRadius: "10px",
-          padding: "12px 16px",
-          fontFamily: "'Plus Jakarta Sans', sans-serif",
+          color: payload[0].payload.color,
+          fontWeight: 800,
+          fontSize: "13px",
         }}
       >
-        <p
-          style={{
-            color: payload[0].payload.color,
-            fontWeight: 800,
-            fontSize: "13px",
-          }}
-        >
-          {payload[0].name}
-        </p>
-        <p style={{ color: "#dde3f0", fontWeight: 700, fontSize: "15px" }}>
-          {payload[0].value} órdenes
-        </p>
-      </div>
-    );
-  }
-  return null;
-};
+        {payload[0].name}
+      </p>
+      <p style={{ color: "#dde3f0", fontWeight: 700, fontSize: "15px" }}>
+        {payload[0].value} órdenes
+      </p>
+    </div>
+  ) : null;
 
 export default function ReportesClient({
   ingresosPorMes,
@@ -114,7 +103,12 @@ export default function ReportesClient({
   ticketPromedio,
   mejorMes,
   mejorMesValor,
+  mesesActual,
 }: Props) {
+  const router = useRouter();
+
+  const cambiarMeses = (m: number) => router.push(`/reportes?meses=${m}`);
+
   return (
     <div
       className="p-6 md:p-8"
@@ -141,19 +135,29 @@ export default function ReportesClient({
               Métricas financieras y operativas del taller
             </p>
           </div>
+          {/* Filtro de meses FUNCIONAL */}
           <div
-            className="px-4 py-2 rounded-lg text-xs font-semibold border"
-            style={{
-              background: "#252b3b",
-              borderColor: "#374060",
-              color: "#a8b4cc",
-            }}
+            className="flex items-center gap-2 p-1 rounded-lg"
+            style={{ background: "#252b3b", border: "1px solid #374060" }}
           >
-            ▸ Últimos 6 meses
+            {[3, 6, 12].map((m) => (
+              <button
+                key={m}
+                onClick={() => cambiarMeses(m)}
+                className="px-3 py-1.5 rounded-md text-xs font-bold transition-all"
+                style={{
+                  background: mesesActual === m ? "#4f8ef7" : "transparent",
+                  color: mesesActual === m ? "#fff" : "#6b7899",
+                  fontFamily: "inherit",
+                }}
+              >
+                {m} meses
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* MÉTRICAS RESUMEN */}
+        {/* MÉTRICAS */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           {[
             {
@@ -218,9 +222,9 @@ export default function ReportesClient({
           ))}
         </div>
 
-        {/* FILA 1: Barras + Dona */}
+        {/* GRÁFICOS FILA 1 */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5">
-          {/* GRÁFICO DE BARRAS — Ingresos por mes */}
+          {/* Barras */}
           <div
             className="lg:col-span-2 rounded-xl border p-5"
             style={{ background: "#252b3b", borderColor: "#2e3650" }}
@@ -231,7 +235,7 @@ export default function ReportesClient({
                   className="text-xs font-bold uppercase"
                   style={{ color: "#6b7899", letterSpacing: "1.5px" }}
                 >
-                  Ingresos por Mes
+                  Ingresos Cobrados por Mes
                 </p>
                 <p className="text-xs mt-0.5" style={{ color: "#6b7899" }}>
                   Mejor mes:{" "}
@@ -277,7 +281,7 @@ export default function ReportesClient({
                   width={70}
                 />
                 <Tooltip
-                  content={<CustomTooltipBar />}
+                  content={<Tooltip1 />}
                   cursor={{ fill: "rgba(52,211,153,0.04)" }}
                 />
                 <Bar
@@ -290,7 +294,7 @@ export default function ReportesClient({
             </ResponsiveContainer>
           </div>
 
-          {/* GRÁFICO DE DONA — Distribución de estados */}
+          {/* Dona */}
           <div
             className="rounded-xl border p-5"
             style={{ background: "#252b3b", borderColor: "#2e3650" }}
@@ -312,15 +316,11 @@ export default function ReportesClient({
                   paddingAngle={3}
                   dataKey="value"
                 >
-                  {distribucionEstados.map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={entry.color}
-                      strokeWidth={0}
-                    />
+                  {distribucionEstados.map((entry, i) => (
+                    <Cell key={i} fill={entry.color} strokeWidth={0} />
                   ))}
                 </Pie>
-                <Tooltip content={<CustomTooltipPie />} />
+                <Tooltip content={<Tooltip3 />} />
               </PieChart>
             </ResponsiveContainer>
             <div className="flex flex-col gap-2 mt-3">
@@ -350,7 +350,7 @@ export default function ReportesClient({
           </div>
         </div>
 
-        {/* FILA 2: Línea de tendencia */}
+        {/* Línea tendencia */}
         <div
           className="rounded-xl border p-5"
           style={{ background: "#252b3b", borderColor: "#2e3650" }}
@@ -400,7 +400,7 @@ export default function ReportesClient({
                 allowDecimals={false}
               />
               <Tooltip
-                content={<CustomTooltipLine />}
+                content={<Tooltip2 />}
                 cursor={{ stroke: "#374060", strokeWidth: 1 }}
               />
               <Line
