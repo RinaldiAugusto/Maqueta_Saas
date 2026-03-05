@@ -1,6 +1,5 @@
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
-import DeleteButton from "@/components/DeleteButton";
 import ClienteDetalle from "@/components/ClienteDetalle";
 
 export default async function ClientesPage({
@@ -16,10 +15,12 @@ export default async function ClientesPage({
     .select("*, vehiculos ( id, patente, marca, modelo, año )")
     .order("created_at", { ascending: false });
 
-  if (query) clientesQuery = clientesQuery.ilike("nombre", `%${query}%`);
+  if (query)
+    clientesQuery = clientesQuery.or(
+      `nombre.ilike.%${query}%,apellido.ilike.%${query}%`,
+    );
 
   const { data: clientes } = await clientesQuery;
-
   const { data: totalData } = await supabase
     .from("clientes")
     .select("id", { count: "exact" });
@@ -27,16 +28,25 @@ export default async function ClientesPage({
   async function agregarCliente(formData: FormData) {
     "use server";
     const nombre = formData.get("nombre") as string;
+    const apellido = formData.get("apellido") as string;
     const telefono = formData.get("telefono") as string;
     const email = formData.get("email") as string;
+    const dni = formData.get("dni") as string;
+    const direccion = formData.get("direccion") as string;
     if (!nombre) return;
     const supabase = await createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    await supabase
-      .from("clientes")
-      .insert({ nombre, telefono, email, user_id: user?.id });
+    await supabase.from("clientes").insert({
+      nombre,
+      apellido,
+      telefono,
+      email,
+      dni,
+      direccion,
+      user_id: user?.id,
+    });
     revalidatePath("/clientes");
   }
 
@@ -48,6 +58,18 @@ export default async function ClientesPage({
     await supabase.from("clientes").delete().eq("id", id);
     revalidatePath("/clientes");
   }
+
+  const inputStyle = {
+    background: "#202637",
+    border: "1px solid #374060",
+    padding: "9px 13px",
+    color: "#dde3f0",
+    fontFamily: "inherit",
+    borderRadius: "8px",
+    fontSize: "14px",
+    outline: "none",
+    width: "100%",
+  } as React.CSSProperties;
 
   return (
     <div
@@ -100,49 +122,107 @@ export default async function ClientesPage({
               Nuevo Cliente
             </p>
             <form action={agregarCliente} className="flex flex-col gap-3">
-              {[
-                {
-                  name: "nombre",
-                  placeholder: "Nombre completo",
-                  type: "text",
-                  required: true,
-                },
-                {
-                  name: "telefono",
-                  placeholder: "Teléfono",
-                  type: "text",
-                  required: false,
-                },
-                {
-                  name: "email",
-                  placeholder: "Email",
-                  type: "email",
-                  required: false,
-                },
-              ].map(({ name, placeholder, type, required }) => (
+              {/* Nombre y Apellido en 2 columnas */}
+              <div className="grid grid-cols-2 gap-2">
+                <div className="flex flex-col gap-1">
+                  <label
+                    className="text-xs font-semibold"
+                    style={{ color: "#a8b4cc" }}
+                  >
+                    Nombre/s *
+                  </label>
+                  <input
+                    type="text"
+                    name="nombre"
+                    placeholder="Juan"
+                    required
+                    style={inputStyle}
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label
+                    className="text-xs font-semibold"
+                    style={{ color: "#a8b4cc" }}
+                  >
+                    Apellido/s
+                  </label>
+                  <input
+                    type="text"
+                    name="apellido"
+                    placeholder="García"
+                    style={inputStyle}
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label
+                  className="text-xs font-semibold"
+                  style={{ color: "#a8b4cc" }}
+                >
+                  Teléfono
+                </label>
                 <input
-                  key={name}
-                  type={type}
-                  name={name}
-                  placeholder={placeholder}
-                  required={required}
-                  className="rounded-lg text-sm outline-none w-full"
-                  style={{
-                    background: "#202637",
-                    border: "1px solid #374060",
-                    padding: "9px 13px",
-                    color: "#dde3f0",
-                    fontFamily: "inherit",
-                  }}
+                  type="text"
+                  name="telefono"
+                  placeholder="Ej: 3512345678"
+                  style={inputStyle}
                 />
-              ))}
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label
+                  className="text-xs font-semibold"
+                  style={{ color: "#a8b4cc" }}
+                >
+                  Email
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="correo@ejemplo.com"
+                  style={inputStyle}
+                />
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label
+                  className="text-xs font-semibold"
+                  style={{ color: "#a8b4cc" }}
+                >
+                  N° de Documento
+                </label>
+                <input
+                  type="text"
+                  name="dni"
+                  placeholder="Ej: 38.123.456"
+                  style={inputStyle}
+                />
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label
+                  className="text-xs font-semibold"
+                  style={{ color: "#a8b4cc" }}
+                >
+                  Dirección
+                </label>
+                <input
+                  type="text"
+                  name="direccion"
+                  placeholder="Calle y número"
+                  style={inputStyle}
+                />
+              </div>
+
               <button
                 type="submit"
-                className="w-full rounded-lg text-sm font-bold text-white transition-all mt-1"
+                className="btn-animate btn-blue w-full rounded-lg text-sm font-bold text-white mt-1"
                 style={{
                   background: "#4f8ef7",
-                  padding: "9px 13px",
+                  padding: "10px 13px",
                   fontFamily: "inherit",
+                  boxShadow: "0 4px 12px rgba(79,142,247,0.2)",
                 }}
               >
                 + Guardar Cliente
@@ -155,7 +235,6 @@ export default async function ClientesPage({
             className="col-span-1 md:col-span-2 rounded-xl border p-5"
             style={{ background: "#252b3b", borderColor: "#2e3650" }}
           >
-            {/* Header con buscador */}
             <div
               className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-3 border-b"
               style={{ borderColor: "#2e3650" }}
@@ -174,7 +253,6 @@ export default async function ClientesPage({
                   {totalData?.length || 0} registros
                 </span>
               </div>
-              {/* Buscador */}
               <form className="relative">
                 <input
                   type="text"
@@ -222,7 +300,15 @@ export default async function ClientesPage({
                 {clientes.map((c) => (
                   <ClienteDetalle
                     key={c.id}
-                    cliente={c}
+                    cliente={{
+                      id: c.id,
+                      nombre: c.nombre,
+                      apellido: c.apellido ?? undefined,
+                      telefono: c.telefono ?? undefined,
+                      email: c.email ?? undefined,
+                      dni: c.dni ?? undefined,
+                      direccion: c.direccion ?? undefined,
+                    }}
                     vehiculos={
                       (c.vehiculos as {
                         id: number;

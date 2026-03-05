@@ -2,6 +2,7 @@ import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import PortalOrdenesActivas from "@/components/PortalOrdenesActivas";
+import PortalHistoricoTurnos from "@/components/PortalHistoricoTurnos";
 
 export default async function PortalPage({
   searchParams,
@@ -29,7 +30,8 @@ export default async function PortalPage({
   const vehiculos = (cliente.vehiculos as any[]) || [];
   const vehiculoIds = vehiculos.map((v: any) => v.id);
 
-  const { data: turnosSolicitados } =
+  // Traemos TODOS los turnos del cliente (sin filtro de fecha) para el histórico
+  const { data: todosLosTurnos } =
     vehiculoIds.length > 0
       ? await supabase
           .from("turnos")
@@ -37,9 +39,7 @@ export default async function PortalPage({
             "id, fecha, hora, estado, estado_gestion, descripcion, servicios ( nombre ), vehiculos ( patente, marca, modelo )",
           )
           .in("vehiculo_id", vehiculoIds)
-          .gte("fecha", new Date().toISOString().split("T")[0])
-          .neq("estado_gestion", "denegado")
-          .order("fecha")
+          .order("fecha", { ascending: false })
       : { data: [] };
 
   const normEstado = (e: string) =>
@@ -109,7 +109,7 @@ export default async function PortalPage({
           <form action={signOut}>
             <button
               type="submit"
-              className="text-xs font-semibold px-3 py-1.5 rounded-lg border"
+              className="btn-animate btn-ghost text-xs font-semibold px-3 py-1.5 rounded-lg border"
               style={{
                 color: "#6b7899",
                 borderColor: "#374060",
@@ -123,7 +123,7 @@ export default async function PortalPage({
         </div>
       </nav>
 
-      <div className="p-6 max-w-4xl mx-auto">
+      <div className="p-6 max-w-6xl mx-auto">
         {pago === "ok" && (
           <div
             className="mb-5 p-4 rounded-xl text-sm font-semibold"
@@ -149,122 +149,39 @@ export default async function PortalPage({
           </p>
         </div>
 
-        {/* ÓRDENES ACTIVAS con scroll */}
-        {ordenesActivas.length > 0 && (
-          <PortalOrdenesActivas ordenes={ordenesActivas} />
-        )}
-
-        {/* TURNOS SOLICITADOS con scroll */}
-        {turnosSolicitados && turnosSolicitados.length > 0 && (
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-3">
-              <p
-                className="text-xs font-bold uppercase"
-                style={{ color: "#6b7899", letterSpacing: "1.5px" }}
+        {/* FILA PRINCIPAL: En el taller ahora + Histórico de turnos lado a lado */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
+          {/* En el taller ahora */}
+          <div>
+            {ordenesActivas.length > 0 ? (
+              <PortalOrdenesActivas ordenes={ordenesActivas} />
+            ) : (
+              <div
+                className="rounded-xl border p-6 text-center h-full flex flex-col items-center justify-center gap-2"
+                style={{ background: "#252b3b", borderColor: "#2e3650" }}
               >
-                📅 Mis Turnos
-              </p>
-              <span
-                className="text-xs font-bold px-2 py-0.5 rounded-full"
-                style={{ background: "#252b3b", color: "#6b7899" }}
-              >
-                {turnosSolicitados.length}
-              </span>
-            </div>
-            {/* Scroll máximo 4 tarjetas */}
-            <div
-              className="flex flex-col gap-3 overflow-y-auto pr-1"
-              style={{ maxHeight: "440px" }}
-            >
-              {(turnosSolicitados as any[]).map((t) => {
-                const confirmado = t.estado_gestion === "confirmado";
-                return (
-                  <div
-                    key={t.id}
-                    className="rounded-xl border p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 flex-shrink-0"
-                    style={{
-                      background: "#252b3b",
-                      borderColor: confirmado
-                        ? "rgba(52,211,153,0.2)"
-                        : "#2e3650",
-                      borderLeftColor: confirmado ? "#34d399" : "#fbbf24",
-                      borderLeftWidth: "3px",
-                    }}
-                  >
-                    <div>
-                      <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <span
-                          className="font-mono text-xs font-bold px-2 py-0.5 rounded"
-                          style={{
-                            background: "#2a3145",
-                            color: "#a8b4cc",
-                            letterSpacing: "1.5px",
-                          }}
-                        >
-                          {(t.vehiculos as any)?.patente}
-                        </span>
-                        <span
-                          className="text-xs font-bold"
-                          style={{ color: "#4f8ef7" }}
-                        >
-                          {new Date(t.fecha + "T00:00:00").toLocaleDateString(
-                            "es-AR",
-                            {
-                              weekday: "short",
-                              day: "2-digit",
-                              month: "short",
-                            },
-                          )}
-                        </span>
-                        <span
-                          className="text-xs font-bold"
-                          style={{ color: "#a8b4cc" }}
-                        >
-                          {t.hora?.slice(0, 5)}
-                        </span>
-                      </div>
-                      <p
-                        className="text-sm font-semibold"
-                        style={{ color: "#dde3f0" }}
-                      >
-                        {(t.servicios as any)?.nombre ??
-                          t.descripcion ??
-                          "Turno agendado"}
-                      </p>
-                      <p
-                        className="text-xs mt-0.5"
-                        style={{ color: "#6b7899" }}
-                      >
-                        {(t.vehiculos as any)?.marca}{" "}
-                        {(t.vehiculos as any)?.modelo}
-                      </p>
-                    </div>
-                    <span
-                      className="text-xs font-bold px-3 py-1.5 rounded-full flex-shrink-0"
-                      style={{
-                        background: confirmado
-                          ? "rgba(52,211,153,0.08)"
-                          : "rgba(251,191,36,0.08)",
-                        color: confirmado ? "#34d399" : "#fbbf24",
-                        border: `1px solid ${confirmado ? "rgba(52,211,153,0.2)" : "rgba(251,191,36,0.2)"}`,
-                      }}
-                    >
-                      {confirmado
-                        ? "✓ Confirmado"
-                        : "Pendiente de confirmación"}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
+                <p
+                  className="text-xs font-bold uppercase"
+                  style={{ color: "#6b7899", letterSpacing: "1.5px" }}
+                >
+                  🔧 En el taller ahora
+                </p>
+                <p className="text-sm" style={{ color: "#4a5068" }}>
+                  No tenés vehículos en el taller actualmente.
+                </p>
+              </div>
+            )}
           </div>
-        )}
+
+          {/* Histórico de turnos con filtro de fecha */}
+          <PortalHistoricoTurnos turnos={(todosLosTurnos as any[]) ?? []} />
+        </div>
 
         {/* ACCIONES RÁPIDAS */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
           <Link
             href="/portal/turno"
-            className="flex items-center gap-4 p-5 rounded-xl border transition-all hover:-translate-y-0.5"
+            className="flex items-center gap-4 p-5 rounded-xl border transition-all hover:-translate-y-0.5 btn-animate btn-ghost"
             style={{
               background: "#252b3b",
               borderColor: "#2e3650",
@@ -295,7 +212,7 @@ export default async function PortalPage({
           </Link>
           <Link
             href="/portal/historial"
-            className="flex items-center gap-4 p-5 rounded-xl border transition-all hover:-translate-y-0.5"
+            className="flex items-center gap-4 p-5 rounded-xl border transition-all hover:-translate-y-0.5 btn-animate btn-ghost"
             style={{
               background: "#252b3b",
               borderColor: "#2e3650",

@@ -83,7 +83,7 @@ function DetalleModal({
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-lg flex items-center justify-center"
+            className="w-8 h-8 rounded-lg flex items-center justify-center btn-animate btn-animate-ghost"
             style={{
               background: "#252b3b",
               color: "#6b7899",
@@ -230,7 +230,7 @@ function DetalleModal({
         )}
         <button
           onClick={onClose}
-          className="w-full rounded-xl py-2.5 text-sm font-bold"
+          className="w-full rounded-xl py-2.5 text-sm font-bold btn-animate btn-animate-ghost"
           style={{
             background: "#252b3b",
             color: "#6b7899",
@@ -269,9 +269,9 @@ export default function PortalOrdenesActivas({
         </span>
       </div>
 
-      {/* Scroll máximo 4 tarjetas visibles (~4 * 130px) */}
+      {/* scroll-box: scrollbar del mismo color que el fondo (#1a1f2e del portal) */}
       <div
-        className="flex flex-col gap-3 overflow-y-auto pr-1"
+        className="scroll-box-portal flex flex-col gap-3 overflow-y-auto pr-1"
         style={{ maxHeight: "540px" }}
       >
         {ordenes.map((o) => {
@@ -357,7 +357,7 @@ export default function PortalOrdenesActivas({
               >
                 <button
                   onClick={() => setModalOrden(o)}
-                  className="text-xs font-bold px-3 py-1.5 rounded-lg"
+                  className="text-xs font-bold px-3 py-1.5 rounded-lg btn-animate btn-animate-ghost"
                   style={{
                     background: "rgba(107,120,153,0.12)",
                     color: "#a8b4cc",
@@ -381,7 +381,7 @@ export default function PortalOrdenesActivas({
                 ) : (
                   <Link
                     href={`/portal/pagar/${o.id}`}
-                    className="text-xs font-bold px-3 py-1.5 rounded-lg"
+                    className="text-xs font-bold px-3 py-1.5 rounded-lg btn-animate"
                     style={{
                       background: "rgba(79,142,247,0.1)",
                       color: "#4f8ef7",

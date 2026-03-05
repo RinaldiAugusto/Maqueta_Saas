@@ -21,8 +21,8 @@ type Props = {
   pendientes: Orden[];
   enCurso: Orden[];
   historial: Orden[];
-  moverEstadoAction: (formData: FormData) => void | Promise<void>;
-  eliminarOrdenAction: (formData: FormData) => void | Promise<void>;
+  moverEstadoAction: (fd: FormData) => void | Promise<void>;
+  eliminarOrdenAction: (fd: FormData) => void | Promise<void>;
 };
 
 function ColHeader({
@@ -122,7 +122,7 @@ function DetalleModal({
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-lg flex items-center justify-center"
+            className="btn-animate btn-ghost w-8 h-8 rounded-lg flex items-center justify-center"
             style={{
               background: "#252b3b",
               color: "#6b7899",
@@ -221,7 +221,7 @@ function DetalleModal({
         <div className="flex gap-2">
           <Link
             href={`/ordenes/${orden.id}`}
-            className="flex-1 text-center rounded-xl py-2.5 text-xs font-bold"
+            className="btn-animate btn-blue flex-1 text-center rounded-xl py-2.5 text-xs font-bold"
             style={{
               background: "rgba(79,142,247,0.08)",
               color: "#4f8ef7",
@@ -233,7 +233,7 @@ function DetalleModal({
           </Link>
           <button
             onClick={onClose}
-            className="flex-1 rounded-xl py-2.5 text-xs font-bold"
+            className="btn-animate btn-ghost flex-1 rounded-xl py-2.5 text-xs font-bold"
             style={{
               background: "#252b3b",
               color: "#6b7899",
@@ -297,7 +297,6 @@ function KanbanCol({
       />
       {!collapsed && (
         <>
-          {/* Lupa */}
           <div className="relative mb-3">
             <span
               className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs"
@@ -330,21 +329,12 @@ function KanbanCol({
             )}
           </div>
 
-          {/* Lista con scroll */}
           <div
-            className="flex flex-col gap-2 overflow-y-auto pr-1"
+            className="scroll-box flex flex-col gap-2 overflow-y-auto pr-1"
             style={{ maxHeight: "420px" }}
           >
             {filtered.map((o) => {
               const cobrado = cobradoBadge(o);
-              const borderLeft = esFinalizado
-                ? cobrado
-                  ? "#34d399"
-                  : "#fbbf24"
-                : cobrado
-                  ? "rgba(52,211,153,0.3)"
-                  : "#2e3650";
-
               return (
                 <div
                   key={o.id}
@@ -355,7 +345,11 @@ function KanbanCol({
                       cobrado && !esFinalizado
                         ? "rgba(52,211,153,0.3)"
                         : "#2e3650",
-                    borderLeftColor: esFinalizado ? borderLeft : undefined,
+                    borderLeftColor: esFinalizado
+                      ? cobrado
+                        ? "#34d399"
+                        : "#fbbf24"
+                      : undefined,
                     borderLeftWidth: esFinalizado ? "3px" : undefined,
                   }}
                 >
@@ -388,8 +382,8 @@ function KanbanCol({
                           <input type="hidden" name="id" value={o.id} />
                           <DeleteButton
                             mensaje="¿Eliminar esta orden?"
-                            className="text-xs px-1.5 py-1 rounded"
-                            style={{ color: "#6b7899" }}
+                            className="btn-animate btn-red text-xs px-1.5 py-1 rounded"
+                            style={{ color: "#f87171" }}
                           >
                             ✕
                           </DeleteButton>
@@ -427,7 +421,7 @@ function KanbanCol({
                     <div className="flex items-center gap-2">
                       <Link
                         href={`/ordenes/${o.id}`}
-                        className="text-xs font-bold px-3 py-1.5 rounded-md"
+                        className="btn-animate btn-ghost text-xs font-bold px-3 py-1.5 rounded-md"
                         style={{
                           background: "rgba(107,120,153,0.12)",
                           color: "#a8b4cc",
@@ -447,7 +441,7 @@ function KanbanCol({
                           />
                           <button
                             type="submit"
-                            className="text-xs font-bold px-3 py-1.5 rounded-md uppercase"
+                            className="btn-animate btn-blue text-xs font-bold px-3 py-1.5 rounded-md uppercase"
                             style={{
                               background:
                                 label === "En Proceso"
@@ -466,7 +460,7 @@ function KanbanCol({
                       {esFinalizado && !cobrado && (
                         <Link
                           href={`/ordenes/${o.id}`}
-                          className="text-xs font-semibold px-2.5 py-1.5 rounded flex items-center gap-1"
+                          className="btn-animate btn-green text-xs font-semibold px-2.5 py-1.5 rounded flex items-center gap-1"
                           style={{
                             background: "rgba(251,191,36,0.08)",
                             color: "#fbbf24",
@@ -517,7 +511,6 @@ export default function KanbanColapsable({
   const cobradoBadge = (o: Orden) => o.pagado || o.pagado_por_cliente;
   const finalizadosSinCobrar = historial.filter((o) => !cobradoBadge(o));
   const finalizadosCobrados = historial.filter((o) => cobradoBadge(o));
-
   const filtradosCobrados = finalizadosCobrados.filter(
     (o) =>
       !busqCobrado ||
@@ -566,7 +559,6 @@ export default function KanbanColapsable({
         />
       </div>
 
-      {/* HISTORIAL COBRADO */}
       <div
         className="rounded-xl border p-4"
         style={{ background: "#252b3b", borderColor: "#2e3650" }}
@@ -582,7 +574,6 @@ export default function KanbanColapsable({
         />
         {col.cobrado && (
           <>
-            {/* Lupa historial cobrado */}
             <div className="relative mb-3 max-w-xs">
               <span
                 className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs"
@@ -614,10 +605,8 @@ export default function KanbanColapsable({
                 </button>
               )}
             </div>
-
-            {/* Grid con scroll */}
             <div
-              className="overflow-y-auto pr-1"
+              className="scroll-box overflow-y-auto pr-1"
               style={{ maxHeight: "340px" }}
             >
               {filtradosCobrados.length === 0 ? (
@@ -689,7 +678,7 @@ export default function KanbanColapsable({
                           </span>
                           <button
                             onClick={() => setModalOrden(o)}
-                            className="text-xs font-bold px-2 py-1 rounded-lg"
+                            className="btn-animate btn-ghost text-xs font-bold px-2 py-1 rounded-lg"
                             style={{
                               background: "rgba(167,139,250,0.08)",
                               color: "#a78bfa",
@@ -709,7 +698,6 @@ export default function KanbanColapsable({
           </>
         )}
       </div>
-
       {modalOrden && (
         <DetalleModal orden={modalOrden} onClose={() => setModalOrden(null)} />
       )}

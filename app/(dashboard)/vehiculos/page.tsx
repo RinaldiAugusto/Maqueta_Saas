@@ -13,13 +13,12 @@ export default async function VehiculosPage({
   const { data: clientes } = await supabase
     .from("clientes")
     .select("id, nombre")
-    .order("nombre", { ascending: true });
+    .order("nombre");
 
   let vehiculosQuery = supabase
     .from("vehiculos")
     .select("*, clientes(nombre)")
     .order("created_at", { ascending: false });
-
   if (query) vehiculosQuery = vehiculosQuery.ilike("patente", `%${query}%`);
 
   const { data: vehiculos } = await vehiculosQuery;
@@ -69,7 +68,6 @@ export default async function VehiculosPage({
       }}
     >
       <div className="mx-auto max-w-5xl">
-        {/* HEADER */}
         <div
           className="flex justify-between items-center mb-6 pb-5 border-b"
           style={{ borderColor: "#2e3650" }}
@@ -153,11 +151,13 @@ export default async function VehiculosPage({
               ))}
               <button
                 type="submit"
-                className="w-full rounded-lg text-sm font-bold text-white transition-all mt-1"
+                className="w-full rounded-lg text-sm font-bold text-white mt-1 btn-animate"
                 style={{
                   background: "#4f8ef7",
                   padding: "9px 13px",
                   fontFamily: "inherit",
+                  boxShadow: "0 4px 12px rgba(79,142,247,0.2)",
+                  transition: "all 0.2s",
                 }}
               >
                 + Guardar Vehículo
@@ -170,7 +170,6 @@ export default async function VehiculosPage({
             className="col-span-1 md:col-span-2 rounded-xl border p-5"
             style={{ background: "#252b3b", borderColor: "#2e3650" }}
           >
-            {/* Header con buscador */}
             <div
               className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-3 border-b"
               style={{ borderColor: "#2e3650" }}
@@ -189,7 +188,6 @@ export default async function VehiculosPage({
                   {totalData?.length || 0} vehículos
                 </span>
               </div>
-              {/* Buscador por patente */}
               <form className="relative">
                 <input
                   type="text"
@@ -286,10 +284,14 @@ export default async function VehiculosPage({
                       <input type="hidden" name="id" value={v.id} />
                       <DeleteButton
                         mensaje={`¿Eliminar vehículo ${v.patente}?`}
-                        className="text-xs px-2 py-1.5 rounded-lg transition-all"
-                        style={{ color: "#6b7899", background: "transparent" }}
+                        className="text-xs px-2 py-1.5 rounded-lg btn-animate btn-animate-red"
+                        style={{
+                          color: "#f87171",
+                          background: "rgba(248,113,113,0.06)",
+                          border: "1px solid rgba(248,113,113,0.15)",
+                        }}
                       >
-                        ✕
+                        ✕ Eliminar
                       </DeleteButton>
                     </form>
                   </li>

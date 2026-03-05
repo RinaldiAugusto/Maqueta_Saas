@@ -5,25 +5,19 @@ import TurnosClient from "@/components/TurnosClient";
 export default async function TurnosPage({
   searchParams,
 }: {
-  searchParams: Promise<{
-    servicio?: string;
-    q_confirmados?: string;
-    q_denegados?: string;
-  }>;
+  searchParams: Promise<{ servicio?: string }>;
 }) {
-  const { servicio, q_confirmados, q_denegados } = await searchParams;
+  const { servicio } = await searchParams;
   const supabase = await createClient();
 
   const { data: clientes } = await supabase
     .from("clientes")
     .select("id, nombre")
     .order("nombre");
-
   const { data: vehiculos } = await supabase
     .from("vehiculos")
     .select("id, patente, marca, modelo, cliente_id")
     .order("patente");
-
   const { data: servicios } = await supabase
     .from("servicios")
     .select("id, nombre")
@@ -33,15 +27,16 @@ export default async function TurnosPage({
   let turnosQuery = supabase
     .from("turnos")
     .select(
-      `id, fecha, hora, descripcion, estado, estado_gestion, cliente_id, vehiculo_id, orden_creada,
+      `id, fecha, hora, descripcion, estado, estado_gestion, cliente_id, vehiculo_id, orden_creada, origen,
       clientes ( nombre, telefono ),
       vehiculos ( id, patente, marca, modelo ),
       servicios ( id, nombre )`,
     )
-    .order("fecha")
-    .order("hora");
+    .order("fecha", { ascending: false })
+    .order("hora", { ascending: false });
 
   if (servicio) turnosQuery = turnosQuery.eq("servicio_id", servicio);
+
   const { data: turnos } = await turnosQuery;
 
   const hoy = new Date().toISOString().split("T")[0];
@@ -55,16 +50,16 @@ export default async function TurnosPage({
       t.estado !== "Cancelado" &&
       t.estado_gestion === "pendiente",
   );
-  const confirmados = (turnos || []).filter(
+  const todosConfirmados = (turnos || []).filter(
     (t) => t.estado_gestion === "confirmado",
   );
-  const denegados = (turnos || []).filter(
+  const todosDenegados = (turnos || []).filter(
     (t) => t.estado_gestion === "denegado",
   );
 
   const hoyCount = pendientes.filter((t) => t.fecha === hoy).length;
   const manCount = pendientes.filter((t) => t.fecha === mananaS).length;
-  const compCount = confirmados.length;
+  const compCount = todosConfirmados.length;
 
   async function agregarTurno(formData: FormData) {
     "use server";
@@ -84,6 +79,7 @@ export default async function TurnosPage({
       descripcion: descripcion || null,
       estado: "Pendiente",
       estado_gestion: "pendiente",
+      origen: "manual",
     });
     revalidatePath("/turnos");
   }
@@ -113,14 +109,12 @@ export default async function TurnosPage({
       vehiculos={vehiculos ?? []}
       servicios={servicios ?? []}
       pendientes={pendientes}
-      confirmados={confirmados}
-      denegados={denegados}
+      todosConfirmados={todosConfirmados}
+      todosDenegados={todosDenegados}
       hoyCount={hoyCount}
       manCount={manCount}
       compCount={compCount}
       servicioFiltro={servicio}
-      qConfirmados={q_confirmados ?? ""}
-      qDenegados={q_denegados ?? ""}
       agregarTurnoAction={agregarTurno}
       denegarTurnoAction={denegarTurno}
       eliminarTurnoAction={eliminarTurno}

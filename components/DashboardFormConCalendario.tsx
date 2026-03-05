@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import CalendarioDisponibilidad from "@/components/CalendarioDisponibilidad";
 
 type Props = {
@@ -28,27 +28,61 @@ export default function DashboardFormConCalendario({
 }: Props) {
   const [fecha, setFecha] = useState("");
   const [hora, setHora] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [ok, setOk] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
 
   const listo = !!fecha && !!hora;
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!listo || loading) return;
+    setLoading(true);
+    const fd = new FormData(e.currentTarget);
+    fd.set("fecha_turno", fecha);
+    fd.set("hora_turno", hora);
+    await agregarOrdenAction(fd);
+    // Reset completo
+    formRef.current?.reset();
+    setFecha("");
+    setHora("");
+    setLoading(false);
+    setOk(true);
+    setTimeout(() => setOk(false), 3000);
+  };
 
   return (
     <div
       className="p-5 rounded-xl border mb-5"
       style={{ background: "#252b3b", borderColor: "#2e3650" }}
     >
-      <p
-        className="text-xs font-bold uppercase mb-4"
-        style={{ color: "#6b7899", letterSpacing: "1.5px" }}
-      >
-        Ingresar Nuevo Vehículo a Reparación
-      </p>
+      <div className="flex items-center justify-between mb-4">
+        <p
+          className="text-xs font-bold uppercase"
+          style={{ color: "#6b7899", letterSpacing: "1.5px" }}
+        >
+          Ingresar Nuevo Vehículo a Reparación
+        </p>
+        {ok && (
+          <span
+            className="text-xs font-bold px-3 py-1 rounded-full"
+            style={{
+              background: "rgba(52,211,153,0.1)",
+              color: "#34d399",
+              border: "1px solid rgba(52,211,153,0.2)",
+            }}
+          >
+            ✓ Ingresado correctamente
+          </span>
+        )}
+      </div>
 
-      <form action={agregarOrdenAction}>
+      <form ref={formRef} onSubmit={handleSubmit}>
         <input type="hidden" name="fecha_turno" value={fecha} />
         <input type="hidden" name="hora_turno" value={hora} />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          {/* COLUMNA IZQUIERDA — datos del vehículo */}
+          {/* COLUMNA IZQUIERDA */}
           <div className="flex flex-col gap-3">
             <div className="flex flex-col gap-1.5">
               <label
@@ -110,7 +144,7 @@ export default function DashboardFormConCalendario({
               />
             </div>
 
-            {/* Resumen turno seleccionado */}
+            {/* Estado del turno */}
             {listo ? (
               <div
                 className="flex items-center justify-between p-3 rounded-lg"
@@ -138,7 +172,7 @@ export default function DashboardFormConCalendario({
                     setFecha("");
                     setHora("");
                   }}
-                  className="text-xs px-2 py-1 rounded-lg"
+                  className="text-xs px-2 py-1 rounded-lg btn-animate btn-animate-red"
                   style={{
                     background: "rgba(248,113,113,0.08)",
                     color: "#f87171",
@@ -168,19 +202,24 @@ export default function DashboardFormConCalendario({
 
             <button
               type="submit"
-              disabled={!listo}
-              className="w-full rounded-lg text-sm font-bold text-white py-3 transition-all active:scale-95 disabled:opacity-40"
+              disabled={!listo || loading}
+              className="w-full rounded-lg text-sm font-bold text-white py-3 btn-animate"
               style={{
-                background: listo
-                  ? "linear-gradient(135deg, #4f8ef7, #3b7de8)"
-                  : "#374060",
+                background:
+                  listo && !loading
+                    ? "linear-gradient(135deg, #4f8ef7, #3b7de8)"
+                    : "#374060",
                 fontFamily: "inherit",
                 boxShadow: listo ? "0 4px 12px rgba(79,142,247,0.25)" : "none",
+                transition: "all 0.2s",
+                cursor: listo && !loading ? "pointer" : "not-allowed",
               }}
             >
-              {listo
-                ? "+ Ingresar Vehículo"
-                : "Seleccioná fecha y hora para continuar"}
+              {loading
+                ? "Ingresando..."
+                : listo
+                  ? "+ Ingresar Vehículo"
+                  : "Seleccioná fecha y hora para continuar"}
             </button>
           </div>
 
@@ -199,6 +238,7 @@ export default function DashboardFormConCalendario({
               </span>
             </label>
             <CalendarioDisponibilidad
+              key={`${fecha}-${hora}-${ok}`}
               onSelect={(f, h) => {
                 setFecha(f);
                 setHora(h);

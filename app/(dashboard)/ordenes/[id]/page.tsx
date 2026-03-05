@@ -65,8 +65,6 @@ export default async function OrdenDetallePage({
   const esFinalizado = estadoNorm === "Finalizado";
   const yaCobrado = orden.pagado === true;
 
-  // ── SERVER ACTIONS ──
-
   async function editarPresupuesto(formData: FormData) {
     "use server";
     const costo = formData.get("costo") as string;
@@ -165,6 +163,18 @@ export default async function OrdenDetallePage({
     revalidatePath(`/ordenes/${id}`);
   }
 
+  /* ─── estilos reutilizables ─── */
+  const inputStyle = {
+    background: "#202637",
+    border: "1px solid #374060",
+    padding: "9px 13px",
+    color: "#dde3f0",
+    fontFamily: "inherit",
+    borderRadius: "8px",
+    fontSize: "14px",
+    outline: "none",
+  } as React.CSSProperties;
+
   return (
     <div
       className="p-6 md:p-8"
@@ -175,11 +185,11 @@ export default async function OrdenDetallePage({
       }}
     >
       <div className="mx-auto max-w-4xl">
-        {/* BACK */}
+        {/* BACK con animación */}
         <Link
           href="/"
-          className="inline-flex items-center gap-2 text-xs font-semibold mb-6 transition-all hover:gap-3"
-          style={{ color: "#6b7899" }}
+          className="inline-flex items-center gap-2 text-xs font-semibold mb-6 btn-animate btn-animate-ghost"
+          style={{ color: "#6b7899", transition: "gap 0.15s" }}
         >
           ← Volver al tablero
         </Link>
@@ -249,7 +259,7 @@ export default async function OrdenDetallePage({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {/* COLUMNA IZQUIERDA */}
           <div className="md:col-span-2 flex flex-col gap-5">
-            {/* Detalle orden */}
+            {/* Detalle */}
             <div
               className="rounded-xl border p-5"
               style={{ background: "#252b3b", borderColor: "#2e3650" }}
@@ -303,7 +313,7 @@ export default async function OrdenDetallePage({
                     </span>
                   </div>
                 </div>
-                {/* BOTÓN PDF */}
+                {/* PDF con animación */}
                 <div
                   className="pt-3 border-t"
                   style={{ borderColor: "#2e3650" }}
@@ -312,7 +322,7 @@ export default async function OrdenDetallePage({
                     href={`/api/presupuesto/${id}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-lg transition-all"
+                    className="inline-flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-lg btn-animate"
                     style={{
                       background: "rgba(79,142,247,0.08)",
                       color: "#4f8ef7",
@@ -399,7 +409,7 @@ export default async function OrdenDetallePage({
                     >
                       <button
                         type="submit"
-                        className="text-xs font-semibold transition-all"
+                        className="text-xs font-semibold btn-animate btn-animate-ghost"
                         style={{
                           color: "#6b7899",
                           background: "none",
@@ -430,13 +440,7 @@ export default async function OrdenDetallePage({
                             name="metodo_pago"
                             required
                             className="rounded-lg text-sm outline-none"
-                            style={{
-                              background: "#202637",
-                              border: "1px solid #374060",
-                              padding: "9px 13px",
-                              color: "#dde3f0",
-                              fontFamily: "inherit",
-                            }}
+                            style={inputStyle}
                           >
                             <option value="">Seleccionar...</option>
                             <option value="Efectivo">Efectivo</option>
@@ -465,28 +469,26 @@ export default async function OrdenDetallePage({
                             name="monto_cobrado"
                             placeholder={`$${new Intl.NumberFormat("es-AR").format(orden.costo)}`}
                             className="rounded-lg text-sm outline-none"
-                            style={{
-                              background: "#202637",
-                              border: "1px solid #374060",
-                              padding: "9px 13px",
-                              color: "#dde3f0",
-                              fontFamily: "inherit",
-                            }}
+                            style={inputStyle}
                           />
                         </div>
                       </div>
+                      {/* Confirmar Cobro con animación verde */}
                       <button
                         type="submit"
-                        className="w-full rounded-lg text-sm font-bold py-2.5 transition-all"
+                        className="w-full rounded-lg text-sm font-bold py-2.5 btn-animate btn-animate-green"
                         style={{
                           background: "#34d399",
                           color: "#0a1628",
                           fontFamily: "inherit",
+                          boxShadow: "0 4px 12px rgba(52,211,153,0.25)",
+                          transition: "all 0.2s",
                         }}
                       >
                         ✓ Confirmar Cobro
                       </button>
                     </form>
+
                     <div className="flex items-center gap-3">
                       <div
                         className="flex-1 h-px"
@@ -503,6 +505,7 @@ export default async function OrdenDetallePage({
                         style={{ background: "#2e3650" }}
                       />
                     </div>
+
                     {orden.mp_link ? (
                       <div
                         className="flex items-center gap-2 p-3 rounded-lg border"
@@ -544,23 +547,19 @@ export default async function OrdenDetallePage({
                             name="monto_mp"
                             placeholder={`$${new Intl.NumberFormat("es-AR").format(orden.costo)}`}
                             className="rounded-lg text-sm outline-none"
-                            style={{
-                              background: "#202637",
-                              border: "1px solid #374060",
-                              padding: "9px 13px",
-                              color: "#dde3f0",
-                              fontFamily: "inherit",
-                            }}
+                            style={inputStyle}
                           />
                         </div>
+                        {/* Generar Link MP con animación */}
                         <button
                           type="submit"
-                          className="w-full rounded-lg text-sm font-bold py-2.5 border transition-all"
+                          className="w-full rounded-lg text-sm font-bold py-2.5 border btn-animate"
                           style={{
                             background: "rgba(79,142,247,0.08)",
                             borderColor: "rgba(79,142,247,0.3)",
                             color: "#4f8ef7",
                             fontFamily: "inherit",
+                            transition: "all 0.2s",
                           }}
                         >
                           ◈ Generar Link de Mercado Pago
@@ -622,7 +621,7 @@ export default async function OrdenDetallePage({
                       <Link
                         key={h.id}
                         href={`/ordenes/${h.id}`}
-                        className="flex justify-between items-center p-4 rounded-xl border transition-all hover:-translate-y-0.5"
+                        className="flex justify-between items-center p-4 rounded-xl border transition-all hover:-translate-y-0.5 btn-animate btn-animate-ghost"
                         style={{
                           background: "#202637",
                           borderColor: "#2e3650",
@@ -710,13 +709,7 @@ export default async function OrdenDetallePage({
                       name="descripcion"
                       defaultValue={orden.descripcion}
                       className="rounded-lg text-sm outline-none"
-                      style={{
-                        background: "#202637",
-                        border: "1px solid #374060",
-                        padding: "9px 13px",
-                        color: "#dde3f0",
-                        fontFamily: "inherit",
-                      }}
+                      style={inputStyle}
                     />
                   </div>
                   <div className="flex flex-col gap-1.5">
@@ -731,23 +724,19 @@ export default async function OrdenDetallePage({
                       name="costo"
                       defaultValue={orden.costo}
                       className="rounded-lg text-sm outline-none"
-                      style={{
-                        background: "#202637",
-                        border: "1px solid #374060",
-                        padding: "9px 13px",
-                        color: "#dde3f0",
-                        fontFamily: "inherit",
-                      }}
+                      style={inputStyle}
                     />
                   </div>
+                  {/* Guardar cambios con animación */}
                   <button
                     type="submit"
-                    className="w-full rounded-lg text-sm font-bold py-2.5 transition-all"
+                    className="w-full rounded-lg text-sm font-bold py-2.5 btn-animate"
                     style={{
                       background: "rgba(79,142,247,0.12)",
                       color: "#4f8ef7",
                       border: "1px solid rgba(79,142,247,0.25)",
                       fontFamily: "inherit",
+                      transition: "all 0.2s",
                     }}
                   >
                     Guardar cambios
@@ -855,7 +844,7 @@ export default async function OrdenDetallePage({
               </div>
             </div>
 
-            {/* Resumen financiero */}
+            {/* Resumen */}
             <div
               className="rounded-xl border p-5"
               style={{ background: "#252b3b", borderColor: "#2e3650" }}

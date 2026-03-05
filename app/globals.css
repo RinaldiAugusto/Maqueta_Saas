@@ -24,3 +24,89 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+/* ── Scrollbar personalizada ── pegar en globals.css ── */
+
+/* Scrollbars dentro de las box del kanban, turnos y portal */
+.scroll-box::-webkit-scrollbar {
+  width: 4px;
+}
+.scroll-box::-webkit-scrollbar-track {
+  background: #252b3b; /* mismo fondo que las box */
+  border-radius: 999px;
+}
+.scroll-box::-webkit-scrollbar-thumb {
+  background: #374060;
+  border-radius: 999px;
+}
+.scroll-box::-webkit-scrollbar-thumb:hover {
+  background: #4f8ef7;
+}
+
+/* Scrollbar para box oscuras */
+.scroll-box-dark::-webkit-scrollbar {
+  width: 4px;
+}
+.scroll-box-dark::-webkit-scrollbar-track {
+  background: #252b3b;
+  border-radius: 999px;
+}
+.scroll-box-dark::-webkit-scrollbar-thumb {
+  background: #374060;
+  border-radius: 999px;
+}
+
+/* Scrollbar para el portal (fondo #1a1f2e) */
+.scroll-box-portal::-webkit-scrollbar {
+  width: 4px;
+}
+.scroll-box-portal::-webkit-scrollbar-track {
+  background: #1a1f2e;
+  border-radius: 999px;
+}
+.scroll-box-portal::-webkit-scrollbar-thumb {
+  background: #2e3650;
+  border-radius: 999px;
+}
+.scroll-box-portal::-webkit-scrollbar-thumb:hover {
+  background: #4f8ef7;
+}
+
+/* Animaciones de botones */
+@keyframes btn-pop {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(0.93);
+  }
+  70% {
+    transform: scale(1.04);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.btn-animate:active {
+  animation: btn-pop 0.22s ease forwards;
+}
+.btn-animate {
+  transition:
+    opacity 0.15s,
+    box-shadow 0.15s,
+    filter 0.15s;
+}
+.btn-animate:hover {
+  filter: brightness(1.12);
+  box-shadow: 0 4px 14px rgba(79, 142, 247, 0.18);
+}
+.btn-animate-green:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 4px 14px rgba(52, 211, 153, 0.2);
+}
+.btn-animate-red:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 4px 14px rgba(248, 113, 113, 0.2);
+}
+.btn-animate-ghost:hover {
+  filter: brightness(1.15);
+}

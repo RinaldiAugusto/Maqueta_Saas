@@ -69,7 +69,7 @@ export default async function PortalTurnoPage({
       .single();
     if (!clienteData) redirect("/portal/sin-cuenta");
 
-    // Verificar disponibilidad antes de insertar
+    // Verificar disponibilidad
     const { data: turnosEnHora } = await supabase
       .from("turnos")
       .select("id")
@@ -92,6 +92,7 @@ export default async function PortalTurnoPage({
       descripcion: descripcion || null,
       estado: "Pendiente",
       estado_gestion: "pendiente",
+      origen: "portal", // ← turno solicitado desde el portal del cliente
     });
 
     if (error)
@@ -113,7 +114,7 @@ export default async function PortalTurnoPage({
       >
         <Link
           href="/portal"
-          className="text-xs font-semibold flex items-center gap-1.5"
+          className="btn-animate btn-ghost text-xs font-semibold flex items-center gap-1.5"
           style={{ color: "#6b7899", textDecoration: "none" }}
         >
           ← Volver
